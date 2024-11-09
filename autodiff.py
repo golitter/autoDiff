@@ -92,7 +92,52 @@ class SubOp(Op):
     def gradient(self, output_grad:float):
         return [output_grad, -output_grad]
 
+class MulOp(Op):
+    """ 
+    乘法操作
+    """
+    def name(self):
+        return 'Mul'
+    def __call__(self, lhs:Union[float,Node], rhs:Union[float,Node]):
+        return Node(self, [lhs, rhs])
+    def compute(self, inputs:List[Union[float,Node]]):
+        return inputs[0] * inputs[1]
+    def gradient(self, inputs:List[Union[float,Node]], output_grad:float):
+        return [inputs[1] * output_grad, inputs[0] * output_grad]
 
-    
-        
-    
+class LnOp(Op):
+    """ 
+    对数操作
+    """
+    def name(self):
+        return 'Ln'
+    def __call__(self, x:Union[float,Node]):
+        return Node(self, [x])
+    def compute(self, inputs:List[Union[float,Node]]):
+        return math.log(inputs[0])
+    def gradient(self, inputs:List[Union[float,Node]], output_grad:float):
+        return [1.0 * output_grad / inputs[0]]
+class SinOp(Op):
+    """ 
+    正弦操作
+    """
+    def name(self):
+        return 'Sin'
+    def __call__(self, x:Union[float,Node]):
+        return Node(self, [x])
+    def compute(self, inputs:List[Union[float,Node]]):
+        return math.sin(inputs[0])
+    def gradient(self, inputs:List[Union[float,Node]], output_grad:float):
+        return [math.cos(inputs[0]) * output_grad]
+class IdentityOp(Op):
+    """ 
+    恒等操作
+    """
+    def name(self):
+        return 'Identity'
+    def __call__(self, x:Union[float,Node]):
+        return Node(self, [x])
+    def compute(self, inputs:List[Union[float,Node]]):
+        return inputs[0]
+    def gradient(self, output_grad:float):
+        return [output_grad]
