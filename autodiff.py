@@ -34,7 +34,7 @@ class Node:
         return self.__str__()
     # repr 和 str 内置方法
     def __str__(self):
-        return f'Node {self.id} : {self.input_values()} {self.op.name} = {self.value}, and grad: {self.grad:.3f}'
+        return f'Node {self.id} : {self.input_values()} {self.op.name()} = {self.value}, and grad: {self.grad:.3f}'
 
 # 操作类
 class Op:
@@ -76,7 +76,7 @@ class AddOp(Op):
         return Node(self, [lhs, rhs])
     def compute(self, inputs:List[Union[float,Node]]):
         return inputs[0] + inputs[1]
-    def gradient(self, output_grad:float):
+    def gradient(self,inputs:List[Union[float, Node]], output_grad:float):
         return [output_grad, output_grad] # rhs 和 lhs 的梯度
 
 class SubOp(Op):
@@ -89,7 +89,7 @@ class SubOp(Op):
         return Node(self, [lhs, rhs])
     def compute(self, inputs:List[Union[float,Node]]):
         return inputs[0] - inputs[1]
-    def gradient(self, output_grad:float):
+    def gradient(self,inputs:List[Union[float, Node]], output_grad:float):
         return [output_grad, -output_grad]
 
 class MulOp(Op):
@@ -139,5 +139,56 @@ class IdentityOp(Op):
         return Node(self, [x])
     def compute(self, inputs:List[Union[float,Node]]):
         return inputs[0]
-    def gradient(self, output_grad:float):
+    def gradient(self,inputs:List[Union[float, Node]],  output_grad:float):
         return [output_grad]
+
+class Executor():
+    """ 执行器 """
+    def __init__(self, root:'Node'):
+        self.root = root
+        self.topo_list = self.__topo_sort(root)
+    def __topo_sort(self, root:'Node'):
+        """
+        拓扑排序
+        """
+        visited = set()
+        topo_list = []
+        def dfs(node:'Node'):
+            if node in visited:
+                return
+            visited.add(node)
+            for n in node.inputs:
+                if isinstance(n, Node):
+                    dfs(n)
+            topo_list.append(node)
+        dfs(root)
+        return topo_list
+    
+    def gradients(self) -> None:
+        """
+        计算梯度
+        """
+        reverse_topo_list:List[Node] = self.topo_list[::-1] # 反向微分
+        reverse_topo_list[0].grad = 1.0 # 设置输出节点的梯度为1
+        for node in reverse_topo_list:
+            grad = node.op.gradient(node.input_values(), node.grad)
+            # 将梯度累加到每一个输入变量的梯度上
+            for n, g in zip(node.inputs, grad):
+                if isinstance(n, Node):
+                    n.grad += g
+        print('Gradients computed:\n\n')
+        for node in reverse_topo_list:
+            print(node)
+    def run(self):
+        """
+        按照拓扑排序的顺序对计算图求值。        
+        """
+        visited = set()
+        print('Evaluation order:')
+        for node in self.topo_list:
+            if node not in visited:
+                node.evaluate()
+                visited.add(node)
+                print("evaluating node: ", node)
+        return self.root.value
+    
