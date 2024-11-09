@@ -18,7 +18,7 @@ class Node:
         Node.init_id += 1
         print(self)
 
-    def input_values(self):
+    def input_values(self) -> List[float]:
         """
         将输入转换成数值，**具体的计算只能发生在数值上**
         """
@@ -33,7 +33,7 @@ class Node:
     def __repr__(self):
         return self.__str__()
     # repr 和 str 内置方法
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Node {self.id} : {self.input_values()} {self.op.name()} = {self.value}, and grad: {self.grad:.3f}'
 
 # 操作类
@@ -45,7 +45,7 @@ class Op:
         这个类本身不包含状态，计算的状态保存在 Node 中，每次调用都会产生一个 Node 对象
     每次执行操作时，都会生成一个新的Node节点，该节点保存了操作的输入、输出以及梯度信息。
     """
-    def name(self):
+    def name(self) -> str:
         """返回操作的名称"""
         pass
 
@@ -61,7 +61,7 @@ class Op:
         计算操作的结果
         """
         pass
-    def gradient(self, output_grad:float):
+    def gradient(self, output_grad:float) -> List[float]:
         """
         计算梯度
         """
@@ -142,6 +142,7 @@ class IdentityOp(Op):
     def gradient(self,inputs:List[Union[float, Node]],  output_grad:float):
         return [output_grad]
 
+
 class Executor():
     """ 执行器 """
     def __init__(self, root:'Node'):
@@ -191,4 +192,3 @@ class Executor():
                 visited.add(node)
                 print("evaluating node: ", node)
         return self.root.value
-    
